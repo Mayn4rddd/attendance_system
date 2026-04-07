@@ -71,10 +71,14 @@ const TeacherDashboard = () => {
 
   // TEMP: SignalR disabled 
   const handleGenerate = async () => {
+    if (loading) return;
     setLoading(true);
     setStatus({ message: "", error: "" });
     try {
-      const response = await api.post("/qr/generate");
+      const response = await api.post("/qr/generate", {
+        userId: user.userId,
+        sectionId: selectedSectionId,
+      });
       setSession(response.data);
       setStatus({ message: "QR session generated successfully.", error: "" });
     } catch (error) {
