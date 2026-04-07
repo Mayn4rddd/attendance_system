@@ -14,8 +14,7 @@ const TeacherDashboard = () => {
   const [selectedSectionId, setSelectedSectionId] = useState(null);
   const [session, setSession] = useState(null);
   const [attendance, setAttendance] = useState([]);
-  const [countdown, setCountdown] = useState(null);
-  const [status, setStatus] = useState({ message: "", error: "" });
+const [countdown, setCountdown] = useState(0);  const [status, setStatus] = useState({ message: "", error: "" });
   const [loading, setLoading] = useState(false);
   const [sectionsLoading, setSectionsLoading] = useState(false);
 
@@ -50,24 +49,36 @@ const TeacherDashboard = () => {
 
 
   useEffect(() => {
-    let intervalId;
+  let intervalId;
 
-    if (session?.expiresAt) {
-      const updateCountdown = () => {
-        const expiresAt = new Date(session.expiryAt).getTime();
-        const seconds = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-        setCountdown(seconds);
-        if (seconds <= 0) {
-          clearInterval(intervalId);
-        }
-      };
+  if (session?.expiresAt) {
+    const updateCountdown = () => {
+      const expiresAt = new Date(session.expiresAt).getTime();
 
-      updateCountdown();
-      intervalId = window.setInterval(updateCountdown, 1000);
-    }
+      if (isNaN(expiresAt)) {
+        console.error("Invalid expiresAt:", session.expiresAt);
+        return;
+      }
 
-    return () => clearInterval(intervalId);
-  }, [session]);
+      const seconds = Math.max(
+        0,
+        Math.floor((expiresAt - Date.now()) / 1000)
+      );
+
+      setCountdown(seconds);
+
+      if (seconds <= 0) {
+        clearInterval(intervalId);
+      }
+    };
+
+    updateCountdown(); // run immediately
+    intervalId = setInterval(updateCountdown, 1000);
+  }
+
+  return () => clearInterval(intervalId);
+}, [session]);
+
 
   // TEMP: SignalR disabled 
   const handleGenerate = async () => {
@@ -166,7 +177,7 @@ const TeacherDashboard = () => {
                       <p className="mt-1 break-all text-sm font-medium text-slate-900">{session.token}</p>
                       <p className="mt-4 text-sm text-slate-500">Expiry</p>
                       <p className="mt-1 text-sm font-medium text-slate-900">{new Date(session.expiresAt).toLocaleString()}</p>
-                      <p className="mt-2 text-sm text-slate-600">Expires in {countdown !== null ? `${countdown}s` : "--"}</p>
+                      <p className="mt-2 text-sm text-slate-600">{countdown > 0 ? `Expires in ${countdown}s` : "Expired"}</p> 
                     </div>
                   </div>
                 ) : (
